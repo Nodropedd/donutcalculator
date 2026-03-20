@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0d;
+    --panel: #161616;
+    --border: #2a2a2a;
+    --accent: #c8f04a;
+    --accent2: #f04a4a;
+    --text: #f0ede6;
+    --muted: #666;
+    --input-bg: #1e1e1e;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,240,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,240,74,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+  .wrapper {
+    width: 100%;
+    max-width: 580px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .header { margin-bottom: 28px; }
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 10vw, 72px);
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+  .header h1 span { color: var(--accent); }
+  .header p { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 28px;
+    position: relative;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 4px 4px 0 0;
+  }
+  .items-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .items-header span { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .btn-add {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-add:hover { background: var(--accent); color: #000; }
+  .col-headers {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .col-headers span { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .items-list { display: flex; flex-direction: column; gap: 8px; }
+  .item-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    align-items: stretch;
+    animation: fadeUp 0.2s ease both;
+  }
+  .input-group {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--input-bg);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-group:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(200,240,74,0.10);
+  }
+  .input-group input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 4px 10px 10px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .input-group input::-webkit-outer-spin-button,
+  .input-group input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .input-group input::placeholder { color: #3a3a3a; font-weight: 400; }
+  .suffix-select {
+    background: #111;
+    border: none;
+    border-left: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 0 6px;
+    outline: none;
+    cursor: pointer;
+    min-width: 50px;
+    appearance: none;
+    text-align: center;
+  }
+  .suffix-select:hover { background: #1a1a1a; }
+  .btn-remove {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    width: 36px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-remove:hover { border-color: var(--accent2); color: var(--accent2); }
+  hr.divider { border: none; border-top: 1px dashed var(--border); margin: 22px 0; }
+  .result-box {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+  .result-label { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+  .result-raw   { font-size: 9px; color: #444; letter-spacing: 1px; margin-top: 4px; }
+  .result-right { text-align: right; }
+  .result-amount {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+  .result-full {
+    font-size: 9px;
+    color: #555;
+    margin-top: 2px;
+    word-break: break-all;
+    max-width: 280px;
+    text-align: right;
+  }
+  .result-amount.pop { animation: pop 0.3s ease; }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.07); }
+    100% { transform: scale(1); }
+  }
+  .breakdown { display: flex; flex-direction: column; gap: 4px; }
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 5px 0;
+    border-bottom: 1px solid #1a1a1a;
+  }
+  .breakdown-row .item-name { color: var(--text); }
+  .breakdown-row .item-val  { font-weight: 700; color: var(--text); white-space: nowrap; }
+  .btn-clear {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-clear:hover { border-color: var(--accent2); color: var(--accent2); }
+  .ticker { font-size: 10px; color: var(--muted); text-align: center; margin-top: 16px; letter-spacing: 1px; }
+  .legend-toggle {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #444;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 14px;
+    user-select: none;
+    transition: color 0.15s;
+  }
+  .legend-toggle:hover { color: var(--accent); }
+  .legend {
+    display: none;
+    margin-top: 10px;
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 16px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px 4px;
+  }
+  .legend.open { display: grid; }
+  .legend-item {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 10px;
+  }
+  .lg-suffix { color: var(--accent); font-weight: 700; min-width: 30px; }
+  .lg-name   { color: var(--muted); }
+  .lg-exp    { color: #333; font-size: 9px; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>SELL<span>$</span></h1>
+    <p>Sales Revenue Calculator</p>
+  </div>
+  <div class="card">
+    <div class="items-header">
+      <span>Items</span>
+      <button class="btn-add" onclick="addRow()">+ Add Item</button>
+    </div>
+    <div class="col-headers">
+      <span>Quantity + scale</span>
+      <span>Price each + scale</span>
+      <span style="width:36px"></span>
+    </div>
+    <div class="items-list" id="itemsList"></div>
+    <hr class="divider">
+    <div class="result-box">
+      <div>
+        <div class="result-label">Total Revenue</div>
+        <div class="result-raw" id="resultRaw"></div>
+      </div>
+      <div class="result-right">
+        <div class="result-amount" id="total">$0</div>
+        <div class="result-full" id="resultFull"></div>
+      </div>
+    </div>
+    <div class="breakdown" id="breakdown"></div>
+    <button class="btn-clear" onclick="clearAll()">✕ &nbsp;Clear All</button>
+  </div>
+  <div class="legend-toggle" id="legendToggle" onclick="toggleLegend()">▾ suffix reference table</div>
+  <div class="legend" id="legend"></div>
+  <div class="ticker" id="ticker">— enter items above to calculate —</div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const SUFFIXES = [
+  { label: '—', exp: 0, name: 'units' },
+  { label: 'K', exp: 3, name: 'thousand' },
+  { label: 'M', exp: 6, name: 'million' },
+  { label: 'B', exp: 9, name: 'billion' },
+  { label: 'T', exp: 12, name: 'trillion' },
+  { label: 'Qd', exp: 15, name: 'quadrillion' },
+  { label: 'Qn', exp: 18, name: 'quintillion' },
+  { label: 'Sx', exp: 21, name: 'sextillion' },
+  { label: 'Sp', exp: 24, name: 'septillion' },
+  { label: 'Oc', exp: 27, name: 'octillion' },
+  { label: 'Nn', exp: 30, name: 'nonillion' },
+  { label: 'Dc', exp: 33, name: 'decillion' },
+  { label: 'Ud', exp: 36, name: 'undecillion' },
+  { label: 'Dd', exp: 39, name: 'duodecillion' },
+  { label: 'Td', exp: 42, name: 'tredecillion' },
+  { label: 'Qad', exp: 45, name: 'quattuordecillion' },
+  { label: 'Qnd', exp: 48, name: 'quindecillion' },
+  { label: 'Sxd', exp: 51, name: 'sexdecillion' }
+];
+
+let rows = [];
+let nextId = 0;
+
+const saveState = () => {
+  localStorage.setItem('sales_calc_data', JSON.stringify({ rows, nextId }));
+};
+
+const realValue = (numStr, exp) => {
+  const n = parseFloat(numStr) || 0;
+  return n === 0 ? 0 : n * Math.pow(10, exp);
+};
+
+const formatSuffixed = (num) => {
+  if (num === 0) return '$0';
+  if (!isFinite(num)) return '$∞';
+  for (let i = SUFFIXES.length - 1; i >= 1; i--) {
+    const div = Math.pow(10, SUFFIXES[i].exp);
+    if (Math.abs(num) >= div) {
+      const v = num / div;
+      let f = Math.abs(v) >= 1000 ? v.toLocaleString('en', { maximumFractionDigits: 0 }) :
+              Math.abs(v) >= 100 ? v.toFixed(1) :
+              Math.abs(v) >= 10 ? v.toFixed(2) : v.toFixed(3);
+      return '$' + f + ' ' + SUFFIXES[i].label;
+    }
+  }
+  return '$' + num.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+function addRow(qty = '', qExp = 0, price = '', pExp = 0) {
+  const id = ++nextId;
+  rows.push({ id, qty, qtyExp: qExp, price, priceExp: pExp });
+  renderRows();
+  if (!qty) setTimeout(() => { const el = $('qty-' + id); if (el) el.focus(); }, 40);
+  saveState();
+}
+
+function removeRow(id) {
+  rows = rows.filter(r => r.id !== id);
+  renderRows();
+  recalc();
+  saveState();
+}
+
+function renderRows() {
+  const list = $('itemsList');
+  list.innerHTML = '';
+  rows.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'item-row';
+    div.innerHTML = `
+      <div class="input-group">
+        <input type="number" id="qty-${row.id}" placeholder="0" value="${row.qty}" oninput="update(${row.id},'qty',this.value)" />
+        <select class="suffix-select" onchange="update(${row.id},'qtyExp',+this.value)">
+          ${SUFFIXES.map(s => `<option value="${s.exp}"${s.exp === row.qtyExp ? ' selected' : ''}>${s.label}</option>`).join('')}
+        </select>
+      </div>
+      <div class="input-group">
+        <input type="number" id="price-${row.id}" placeholder="0.00" value="${row.price}" oninput="update(${row.id},'price',this.value)" />
+        <select class="suffix-select" onchange="update(${row.id},'priceExp',+this.value)">
+          ${SUFFIXES.map(s => `<option value="${s.exp}"${s.exp === row.priceExp ? ' selected' : ''}>${s.label}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn-remove" onclick="removeRow(${row.id})">✕</button>`;
+    list.appendChild(div);
+  });
+}
+
+function update(id, field, value) {
+  const row = rows.find(r => r.id === id);
+  if (row) {
+    row[field] = field.endsWith('Exp') ? Number(value) : value;
+    recalc();
+    saveState();
+  }
+}
+
+function recalc() {
+  let total = 0;
+  const bd = $('breakdown');
+  bd.innerHTML = '';
+  rows.forEach((row, i) => {
+    const q = realValue(row.qty, row.qtyExp);
+    const p = realValue(row.price, row.priceExp);
+    const sub = q * p;
+    total += sub;
+    if (q > 0 || p > 0) {
+      const d = document.createElement('div');
+      d.className = 'breakdown-row';
+      d.innerHTML = `<span class="item-name">Item ${i+1} <span style="color:var(--muted)">${formatSuffixed(q).replace('$','')} × ${formatSuffixed(p)}</span></span>
+                     <span class="item-val">${formatSuffixed(sub)}</span>`;
+      bd.appendChild(d);
+    }
+  });
+  const tEl = $('total');
+  tEl.textContent = formatSuffixed(total);
+  tEl.classList.remove('pop');
+  void tEl.offsetWidth;
+  tEl.classList.add('pop');
+  $('resultRaw').textContent = total > 0 ? '≈ $' + (total < 1e15 ? total.toLocaleString() : total.toExponential(4)) : '';
+  $('resultFull').textContent = total >= 1e15 ? BigInt(Math.round(total)).toLocaleString() : '';
+  $('ticker').textContent = rows.length === 0 ? '— enter items —' : `${rows.length} items · total ${formatSuffixed(total)}`;
+}
+
+function clearAll() {
+  if(confirm('Clear all items?')) {
+    rows = []; nextId = 0;
+    renderRows(); recalc(); saveState();
+  }
+}
+
+function toggleLegend() {
+  const l = $('legend');
+  l.classList.toggle('open');
+  $('legendToggle').textContent = l.classList.contains('open') ? '▴ hide table' : '▾ suffix reference table';
+}
+
+$('legend').innerHTML = SUFFIXES.map(s => `<div class="legend-item"><span class="lg-suffix">${s.label}</span><span class="lg-name">${s.name}</span></div>`).join('');
+
+const saved = localStorage.getItem('sales_calc_data');
+if (saved) {
+  const p = JSON.parse(saved);
+  rows = p.rows || [];
+  nextId = p.nextId || 0;
+  renderRows(); recalc();
+} else {
+  addRow(); addRow();
+}
+</script>
+</body>
+</html>

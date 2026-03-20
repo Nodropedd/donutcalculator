@@ -1,2 +1,0 @@
-# donutcalculator
-nice money calculator.
